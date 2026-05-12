@@ -41,14 +41,20 @@ Local Storage  je v projektu využito ke dvěma účelům:
 1. Uložení uživatelského nastavení - konkrétně volby mezi světlým a tmavým režimem (Dark mode). Nastavení tak zůstává zachováno i při dalším spuštění.
 2. Zálohování (Drafts) – slouží jako dočasná paměť pro transakce vytvořené v momentě, kdy je zařízení offline.
 
-**Integrace externího API**
-Aplikace obsahuje napojení na veřejně dostupné rozhraní Frankfurter API pro získávání aktuálních kurzů měn. Pokud uživatel zadá výdaj provedený v cizí měně (např. `€`, `$`), aplikace se dotáže na aktuální kurz a částku automaticky převede na Kč, aby byla zachována jednotnost statistik.
+**Integrace externího API**<br>
+Pro zachování jednotných statistik v Kč aplikace využívá veřejné Frankfurter API.<br>Pokud uživatel zadá transakci v cizí měně (např. EUR nebo USD), aplikace před zápisem do databáze provede asynchronní dotaz (Fetch API) na aktuální kurz a zadanou částku automaticky převede. 
+
+K tomuto účelu je využit endpoint pro přímý převod konkrétní částky:
+* **Endpoint:**<br>
+`GET https://api.frankfurter.app/latest?amount={castka}&from={puvodni_mena}&to=CZK`
+* **Příklad z praxe:**<br>Pokud uživatel zadá výdaj ve výši `15 EUR`, aplikace odešle požadavek na `https://api.frankfurter.app/latest?amount=15&from=EUR&to=CZK`.<br>
+Z vrácené JSON odpovědi se vezme výsledná hodnota v Kč a ta se následně uloží pomocí backendu.
 
 ## 5. Datový model a požadavky na REST API
 
 Pro trvalé ukládání dat aplikace komunikuje s backendem, kterému odesílá informace ve formátu JSON (příklad těla požadavku: `{"amount": 150, "category": "Jídlo"}`). 
 
-Pro správný chod aplikace jsou vyžadovány tyto endpointy:
+Aplikace bude využívat tyto endpointy:
 * `GET /api/transactions` - Načtení všech záznamů při spuštění aplikace.
 * `POST /api/transactions` - Vytvoření a uložení nové transakce po odeslání formuláře.
 * `PATCH /api/transactions/:id` - Úprava dat (např. pokud se uživatel upsal u částky)
